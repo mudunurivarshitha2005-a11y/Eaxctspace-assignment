@@ -1,0 +1,13 @@
+{
+  "name": "devops-web-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node.js Puppeteer scraper hosted by a Python Flask application",
+  "main": "scraper/scrape.js",
+  "scripts": {
+    "scrape": "node scraper/scrape.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "^24.10.2"
+  }
+}

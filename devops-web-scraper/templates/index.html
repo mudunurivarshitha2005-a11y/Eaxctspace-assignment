@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Scraper | Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4f6fb; --panel: #ffffff; --ink: #172033; --muted: #718096;
+      --line: #e5eaf2; --blue: #315efb; --blue-soft: #edf2ff;
+      --green: #138a58; --red: #c43d4b; --shadow: 0 8px 28px rgba(24,39,75,.06);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+    .layout { min-height: 100vh; display: grid; grid-template-columns: 248px 1fr; }
+    aside { background: #111a2e; color: #dbe4f5; padding: 26px 18px; }
+    .brand { display:flex; align-items:center; gap:11px; font-size:17px; font-weight:750; padding: 0 8px 32px; }
+    .brand-mark { width:34px; height:34px; border-radius:11px; background:#4268ff; display:grid; place-items:center; color:white; font-weight:800; }
+    .nav-label { color:#8290aa; text-transform:uppercase; letter-spacing:.12em; font-size:10px; font-weight:700; padding: 0 10px; margin: 10px 0; }
+    .nav-item { padding:11px 12px; border-radius:9px; color:#c5d0e4; margin:4px 0; }
+    .nav-item.active { background:#25365b; color:white; }
+    .side-note { margin:34px 7px 0; border:1px solid #2b3b5b; padding:13px; border-radius:10px; color:#9eacc4; font-size:12px; }
+    main { min-width:0; padding: 30px clamp(18px,4vw,54px); }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:30px; }
+    .eyebrow { color:var(--blue); font-weight:750; font-size:11px; text-transform:uppercase; letter-spacing:.12em; }
+    h1 { margin:4px 0; font-size:27px; letter-spacing:-.04em; }
+    .sub { color:var(--muted); margin:0; }
+    .status { display:flex; align-items:center; gap:7px; background:#e9f8f0; color:var(--green); border-radius:20px; padding:7px 11px; font-size:12px; font-weight:700; white-space:nowrap; }
+    .dot { width:7px; height:7px; border-radius:50%; background:#20b36b; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:15px; box-shadow:var(--shadow); padding:22px; margin-bottom:20px; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px; }
+    h2 { font-size:15px; margin:0; }
+    .hint { color:var(--muted); font-size:12px; margin-top:4px; }
+    .url-row { display:flex; gap:10px; }
+    input { min-width:0; flex:1; padding:13px 14px; border:1px solid #dce3ee; border-radius:9px; outline:none; font:inherit; }
+    input:focus { border-color:var(--blue); box-shadow:0 0 0 3px #315efb18; }
+    button { border:0; border-radius:9px; background:var(--blue); color:white; padding:0 19px; font:700 13px inherit; font-weight:700; cursor:pointer; min-height:44px; }
+    button:disabled { opacity:.6; cursor:wait; }
+    .secondary { background:white; color:#33415c; border:1px solid var(--line); min-height:36px; padding:0 12px; }
+    .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+    .stat { background:white; border:1px solid var(--line); border-radius:13px; padding:17px; box-shadow:var(--shadow); }
+    .stat-label { color:var(--muted); font-size:12px; }
+    .stat-value { font-size:22px; font-weight:750; margin-top:4px; overflow-wrap:anywhere; }
+    .result-grid { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr); gap:20px; align-items:start; }
+    .field-label { color:var(--muted); text-transform:uppercase; font-size:10px; letter-spacing:.1em; font-weight:750; margin:16px 0 5px; }
+    .field-value { overflow-wrap:anywhere; }
+    .heading-list { padding-left:19px; margin:6px 0; }
+    .heading-list li { margin:5px 0; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; background:#111a2e; color:#d9e5ff; padding:16px; border-radius:10px; max-height:430px; overflow:auto; font:12px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .history-list { display:flex; flex-direction:column; gap:8px; }
+    .history-item { border:1px solid var(--line); border-radius:9px; padding:10px 11px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .history-url { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#34425e; cursor:pointer; }
+    .history-time { color:var(--muted); font-size:10px; white-space:nowrap; }
+    .empty { color:var(--muted); text-align:center; padding:28px 10px; }
+    .message { display:none; padding:11px 13px; border-radius:9px; margin-top:12px; font-size:12px; }
+    .message.error { display:block; color:var(--red); background:#fff0f1; }
+    .message.success { display:block; color:var(--green); background:#eaf8f1; }
+    .actions { display:flex; gap:8px; }
+    footer { color:#99a3b5; font-size:11px; text-align:center; padding:8px; }
+    @media(max-width:900px) { .layout{grid-template-columns:1fr} aside{display:none} .result-grid{grid-template-columns:1fr} }
+    @media(max-width:560px) { main{padding:20px 13px} .stats{grid-template-columns:1fr} .url-row{flex-direction:column} button{min-height:43px} .topbar{align-items:flex-start} h1{font-size:23px} .panel{padding:16px} }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand"><div class="brand-mark">WS</div> Web Scraper</div>
+    <div class="nav-label">Workspace</div>
+    <div class="nav-item active">▦ &nbsp; Overview</div>
+    <div class="nav-item">⌁ &nbsp; Website extraction</div>
+    <div class="nav-label" style="margin-top:28px">System</div>
+    <div class="nav-item">◉ &nbsp; Docker container</div>
+    <div class="side-note"> <strong style="color:#e5ecfa">Scraper service</strong><br>Node.js + Puppeteer<br>Python + Flask<br>Container port: 5000</div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <div class="eyebrow">Workspace / Overview</div>
+        <h1>Website Intelligence</h1>
+        <p class="sub">Extract and inspect structured content from public websites.</p>
+      </div>
+      <div class="status"><span class="dot"></span> Service interface</div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><h2>New extraction</h2><div class="hint">Enter a public website URL to start a Puppeteer browser session.</div></div>
+      </div>
+      <form id="scrape-form">
+        <div class="url-row">
+          <input id="url-input" type="url" placeholder="https://www.python.org" required>
+          <button id="scrape-button" type="submit">↗ &nbsp; Scrape website</button>
+        </div>
+      </form>
+      <div id="message" class="message"></div>
+    </section>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Current page title</div><div class="stat-value" id="stat-title">—</div></div>
+      <div class="stat"><div class="stat-label">Headings extracted</div><div class="stat-value" id="stat-headings">0</div></div>
+      <div class="stat"><div class="stat-label">Successful sessions</div><div class="stat-value" id="stat-sessions">0</div></div>
+    </div>
+
+    <div class="result-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2>Extraction results</h2><div class="hint" id="result-url">Your scraped page details will appear here.</div></div>
+          <div class="actions">
+            <button class="secondary" id="download-button" type="button" disabled>↓ JSON</button>
+          </div>
+        </div>
+        <div id="results" class="empty">No extraction yet. Enter a URL above to get started.</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><h2>Scraping history</h2><div class="hint">Stored locally in this browser.</div></div><button class="secondary" id="clear-history" type="button">Clear</button></div>
+        <div id="history" class="history-list"><div class="empty">No history yet.</div></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head"><div><h2>Raw JSON response</h2><div class="hint">The structured response returned by the Flask API.</div></div></div>
+      <pre id="json-output">{ }</pre>
+    </section>
+    <footer>Web Scraper Dashboard · Dockerized Node.js and Python application</footer>
+  </main>
+</div>
+
+<script>
+  const form = document.getElementById("scrape-form");
+  const input = document.getElementById("url-input");
+  const button = document.getElementById("scrape-button");
+  const message = document.getElementById("message");
+  const results = document.getElementById("results");
+  const jsonOutput = document.getElementById("json-output");
+  const downloadButton = document.getElementById("download-button");
+  const HISTORY_KEY = "webScraperHistoryV1";
+  let currentData = null;
+  let sessionCount = 0;
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }
+    catch { return []; }
+  }
+
+  function showMessage(text, type) {
+    message.textContent = text;
+    message.className = "message " + type;
+  }
+
+  function renderHistory() {
+    const history = getHistory();
+    const container = document.getElementById("history");
+    container.replaceChildren();
+    if (!history.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "No history yet.";
+      container.appendChild(empty);
+      return;
+    }
+    history.slice(0, 12).forEach(item => {
+      const row = document.createElement("div");
+      row.className = "history-item";
+      const url = document.createElement("span");
+      url.className = "history-url";
+      url.textContent = item.url;
+      url.title = "Click to scrape this URL again";
+      url.addEventListener("click", () => { input.value = item.url; form.requestSubmit(); });
+      const time = document.createElement("span");
+      time.className = "history-time";
+      time.textContent = new Date(item.scraped_at).toLocaleString();
+      row.append(url, time);
+      container.appendChild(row);
+    });
+  }
+
+  function renderResults(data) {
+    currentData = data;
+    document.getElementById("stat-title").textContent = data.title || "Untitled";
+    document.getElementById("stat-headings").textContent = (data.headings || []).length;
+    document.getElementById("result-url").textContent = data.url || "";
+    jsonOutput.textContent = JSON.stringify(data, null, 2);
+    downloadButton.disabled = false;
+
+    const wrapper = document.createElement("div");
+    const addField = (label, value) => {
+      const heading = document.createElement("div");
+      heading.className = "field-label";
+      heading.textContent = label;
+      const content = document.createElement("div");
+      content.className = "field-value";
+      content.textContent = value || "Not available";
+      wrapper.append(heading, content);
+    };
+    addField("Page title", data.title);
+    addField("Meta description", data.meta_description);
+    addField("First heading", data.first_heading);
+
+    const label = document.createElement("div");
+    label.className = "field-label";
+    label.textContent = "All headings";
+    wrapper.appendChild(label);
+    const list = document.createElement("ul");
+    list.className = "heading-list";
+    (data.headings || []).forEach(value => {
+      const li = document.createElement("li");
+      li.textContent = value;
+      list.appendChild(li);
+    });
+    if (!list.children.length) {
+      const li = document.createElement("li");
+      li.textContent = "No headings found";
+      list.appendChild(li);
+    }
+    wrapper.appendChild(list);
+    addField("Text excerpt", data.text_excerpt);
+    addField("Scraped at", data.scraped_at);
+    results.replaceChildren(wrapper);
+  }
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const url = input.value.trim();
+    if (!url) return;
+
+    button.disabled = true;
+    button.textContent = "Scraping…";
+    message.className = "message";
+    showMessage("Launching Chromium and extracting website content…", "success");
+
+    try {
+      const response = await fetch("/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Scraping failed.");
+
+      renderResults(data);
+      sessionCount += 1;
+      document.getElementById("stat-sessions").textContent = sessionCount;
+      const history = getHistory().filter(item => item.url !== data.url);
+      history.unshift({ url: data.url, scraped_at: data.scraped_at });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 30)));
+      renderHistory();
+      showMessage("Website scraped successfully.", "success");
+    } catch (error) {
+      showMessage(error.message || "Unable to contact the scraper service.", "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = "↗  Scrape website";
+    }
+  });
+
+  downloadButton.addEventListener("click", () => {
+    if (!currentData) return;
+    const blob = new Blob([JSON.stringify(currentData, null, 2)], { type: "application/json" });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = "scraped_data.json";
+    link.click();
+    URL.revokeObjectURL(objectUrl);
+  });
+
+  document.getElementById("clear-history").addEventListener("click", () => {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+  });
+
+  renderHistory();
+</script>
+</body>
+</html>
